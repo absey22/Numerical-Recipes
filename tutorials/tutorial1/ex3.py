@@ -34,25 +34,46 @@ plt.plot(xinterp,ydata,'yo')
 
 
 #linear interpolate on these values:
-interpolation=[]
+lin_interpolation=[]
 for i in range(len(xinterp)):
     print "section",i+1,"/",len(xinterp)
     if i<len(xinterp)-1:
         print "from:",min(sample_points[j_low[i]:j_low[i+1]]),"to:",max(sample_points[j_low[i]:j_low[i+1]])
         y=ydata[i]+(sample_points[j_low[i]:j_low[i+1]]-xinterp[i])*( (ydata[i+1]-ydata[i]) / (xinterp[i+1]-xinterp[i]) )
-        interpolation.append(y)
+        lin_interpolation.append(y)
     else:
         print "(must extrapolate)"
         print i
         #y=ydata[i-1]+(sample_points[j_low[i]:]-xinterp[i-1])*( (ydata[i]-ydata[i-1]) / (xinterp[i]-xinterp[i-1]) )
-interpolation=np.asarray(interpolation)
-interpolation=interpolation.ravel()
+lin_interpolation=np.asarray(lin_interpolation)
+lin_interpolation=lin_interpolation.ravel()
 
-print sample_points.shape,len(interpolation)
+print sample_points.shape,len(lin_interpolation)
 
-plt.plot(sample_points[:len(interpolation)],interpolation,'g^')
+plt.plot(sample_points[:len(lin_interpolation)],lin_interpolation,'g^')
+
+
+
+Neville=[]
+init_P=ydata
+P=init_P
+Htemp=[]
+for i in range(len(xinterp)):
+    H=( (xinterp[i+1]-sample_points)*P[i+1] + (sample_points-xinterp[i])*P[i] ) / (xinterp[i]-xinterp[i+1])
+    Htemp.append(H)
+    P=Htemp
+       
+
+
+
+
+
+
+
+
+
+
 plt.show()
-
 
 """  
 # do this via bisection algorithm:
