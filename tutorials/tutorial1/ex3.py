@@ -43,27 +43,57 @@ for i in range(len(xinterp)):
         lin_interpolation.append(y)
     else:
         print "(must extrapolate)"
-        print i
+        
         #y=ydata[i-1]+(sample_points[j_low[i]:]-xinterp[i-1])*( (ydata[i]-ydata[i-1]) / (xinterp[i]-xinterp[i-1]) )
 lin_interpolation=np.asarray(lin_interpolation)
 lin_interpolation=lin_interpolation.ravel()
 
-print sample_points.shape,len(lin_interpolation)
+
 
 plt.plot(sample_points[:len(lin_interpolation)],lin_interpolation,'g^')
 
 
 
+
+P_init=ydata
+P=P_init
+H=[]
+print "inital P:",P
+for order in range(len(xinterp)-1):
+    print "order:",order+1
+    for i in range(len(P)-1):
+        print "--ith P:",i
+        print "---calculate over pts:",min(sample_points[j_low[i]:j_low[i+1+order]]),"to",max(sample_points[j_low[i]:j_low[i+1+order]])
+        print "---subtract",xinterp[i+1+order],"from it"
+        print "---multiply that result by",P[i]
+        num1=(sample_points[j_low[i]:j_low[i+1+order]] - xinterp[i+1+order]) *P[i]
+        num2=(sample_points[j_low[i]:j_low[i+1+order]] - xinterp[i]) *P[i+1]
+        den=xinterp[i]-xinterp[i+1+order]
+        H.append( ( num1 - num2 )  / (den) )
+    print H
+    P=H
+P=np.asarray(P)
+print P
+
+
+
+
+
+
+
+
+"""
 Neville=[]
 init_P=ydata
 P=init_P
 Htemp=[]
-for i in range(len(xinterp)):
-    H=( (xinterp[i+1]-sample_points)*P[i+1] + (sample_points-xinterp[i])*P[i] ) / (xinterp[i]-xinterp[i+1])
+for i in range(len(P)):
+    H=( (xinterp[i+1]-sample_points[])*P[i+1] + (sample_points[]-xinterp[i])*P[i] ) / (xinterp[i]-xinterp[i+1])
     Htemp.append(H)
     P=Htemp
        
 
+"""
 
 
 
@@ -72,8 +102,7 @@ for i in range(len(xinterp)):
 
 
 
-
-plt.show()
+#plt.show()
 
 """  
 # do this via bisection algorithm:
