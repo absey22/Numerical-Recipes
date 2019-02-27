@@ -28,9 +28,9 @@ j_low=np.asarray(j_low)
 xinterp=sample_points[ j_low[:].astype(int) ]
 ydata=fx(xinterp)
 
-plt.plot(basedata,np.zeros(len(basedata)),'ro')
-plt.plot(xinterp,np.zeros(len(xinterp)),'bo')
-plt.plot(xinterp,ydata,'yo')
+#plt.plot(basedata,np.zeros(len(basedata)),'ro')
+#plt.plot(xinterp,np.zeros(len(xinterp)),'bo')
+#plt.plot(xinterp,ydata,'yo')
 
 
 #linear interpolate on these values:
@@ -50,7 +50,7 @@ lin_interpolation=lin_interpolation.ravel()
 
 
 
-plt.plot(sample_points[:len(lin_interpolation)],lin_interpolation,'g^')
+#plt.plot(sample_points[:len(lin_interpolation)],lin_interpolation,'g^')
 
 
 
@@ -60,9 +60,9 @@ P=P_init
 print "inital P:",P
 for order in range(len(xinterp)-1):
     print
-    print ":::FINDING ORDER",order+1," terms:::  (using previous order",order,"with",len(P),"items.)"
-    #for p in P:
-    #    print p
+    print ":::FINDING ORDER",order+1," terms:::  (using order",order,"with",len(P),"entries)"
+    for p in P:
+        print p
     H=[]
     for i in range(len(P)-1):
         j=i+(order+1)
@@ -74,40 +74,49 @@ for order in range(len(xinterp)-1):
             den=xinterp[j]-xinterp[i]
         else:
             print "1st term:","P_"+str((i,j-1))
-            print "---calculate over pts:",min(sample_points[j_low[i]:j_low[j-1]]),"to",max(sample_points[j_low[i]:j_low[j-1]]),"(",len(sample_points[j_low[i]:j_low[j-1]]),"pts. )"
+            print "---interpolate on:",min(sample_points[j_low[i]:j_low[j-1]]),"to",max(sample_points[j_low[i]:j_low[j-1]]),"btwn",xinterp[i],"and",xinterp[j-1],"(",len(sample_points[j_low[i]:j_low[j-1]]),"pts.)"
             print "---subtract",xinterp[j],"from it"
             print "---multiply that result by",P[i]
-            num1=(sample_points[j_low[i]:j_low[j-1]] - xinterp[j]) * P[i]
+            
             print "2nd term:","P_"+str((i+1,j))
-            print "---calculate over pts:",min(sample_points[j_low[i+1]:j_low[j]]),"to",max(sample_points[j_low[i+1]:j_low[j]]),"(",len(sample_points[j_low[i+1]:j_low[j]]),"pts. )"
+            print "---interpolate on:",min(sample_points[j_low[i+1]:j_low[j]]),"to",max(sample_points[j_low[i+1]:j_low[j]]),"btwn",xinterp[i+1],"and",xinterp[j],"(",len(sample_points[j_low[i+1]:j_low[j]]),"pts.)"
             print "---subtract",xinterp[i],"from it"
             print "---multiply that result by",P[i+1]
+
+            num1=(sample_points[j_low[i]:j_low[j-1]] - xinterp[j]) * P[i]
             num2=(sample_points[j_low[i+1]:j_low[j]] - xinterp[i]) * P[i+1]
             den=xinterp[i]-xinterp[j]
-        H.append( ( num1 - num2 )  / (den) )
+            
+        result=( num1 - num2 )  / (den)
+        print "RESULT =",result," (",len(result),"items)"
+        H.append( result )
+    #H=np.asarray(H)
+    #P=H.ravel()
     P=H
-P=np.asarray(P)
-print P
+print len(P)
 
 
-
-
+#plt.plot(sample_points[:len(P)],P,'p*')
+#plt.show()
 
 
 
 
 """
+
 Neville=[]
 init_P=ydata
 P=init_P
-Htemp=[]
-for i in range(len(P)):
-    H=( (xinterp[i+1]-sample_points[])*P[i+1] + (sample_points[]-xinterp[i])*P[i] ) / (xinterp[i]-xinterp[i+1])
-    Htemp.append(H)
-    P=Htemp
-       
 
+for s in range(len(sample_points)):
+    H=( (xinterp[i+1]-sample_points[])*P[i+1] + \
+        (sample_points[]-xinterp[i]) * P[i]  )  \
+       /  (xinterp[i]-xinterp[i+1])
+    H.append()
+    P=H
+       
 """
+
 
 
 
