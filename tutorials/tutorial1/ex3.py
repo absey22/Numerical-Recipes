@@ -57,20 +57,34 @@ plt.plot(sample_points[:len(lin_interpolation)],lin_interpolation,'g^')
 
 P_init=ydata
 P=P_init
-H=[]
 print "inital P:",P
 for order in range(len(xinterp)-1):
-    print "order:",order+1
+    print
+    print ":::FINDING ORDER",order+1," terms:::  (using previous order",order,"with",len(P),"items.)"
+    #for p in P:
+    #    print p
+    H=[]
     for i in range(len(P)-1):
-        print "--ith P:",i
-        print "---calculate over pts:",min(sample_points[j_low[i]:j_low[i+1+order]]),"to",max(sample_points[j_low[i]:j_low[i+1+order]])
-        print "---subtract",xinterp[i+1+order],"from it"
-        print "---multiply that result by",P[i]
-        num1=(sample_points[j_low[i]:j_low[i+1+order]] - xinterp[i+1+order]) *P[i]
-        num2=(sample_points[j_low[i]:j_low[i+1+order]] - xinterp[i]) *P[i+1]
-        den=xinterp[i]-xinterp[i+1+order]
+        j=i+(order+1)
+        print
+        print "--==--the p-th item:","P_"+str((i,j))
+        if order==0:
+            num1=(sample_points[j_low[i]:j_low[j]] - xinterp[j]) *P[i]
+            num2=(sample_points[j_low[i]:j_low[j]] - xinterp[i]) *P[i+1]
+            den=xinterp[j]-xinterp[i]
+        else:
+            print "1st term:","P_"+str((i,j-1))
+            print "---calculate over pts:",min(sample_points[j_low[i]:j_low[j-1]]),"to",max(sample_points[j_low[i]:j_low[j-1]]),"(",len(sample_points[j_low[i]:j_low[j-1]]),"pts. )"
+            print "---subtract",xinterp[j],"from it"
+            print "---multiply that result by",P[i]
+            num1=(sample_points[j_low[i]:j_low[j-1]] - xinterp[j]) * P[i]
+            print "2nd term:","P_"+str((i+1,j))
+            print "---calculate over pts:",min(sample_points[j_low[i+1]:j_low[j]]),"to",max(sample_points[j_low[i+1]:j_low[j]]),"(",len(sample_points[j_low[i+1]:j_low[j]]),"pts. )"
+            print "---subtract",xinterp[i],"from it"
+            print "---multiply that result by",P[i+1]
+            num2=(sample_points[j_low[i+1]:j_low[j]] - xinterp[i]) * P[i+1]
+            den=xinterp[i]-xinterp[j]
         H.append( ( num1 - num2 )  / (den) )
-    print H
     P=H
 P=np.asarray(P)
 print P
