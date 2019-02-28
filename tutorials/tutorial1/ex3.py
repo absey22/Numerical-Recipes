@@ -29,6 +29,7 @@ xinterp=sample_points[ j_low[:].astype(int) ]
 ydata=fx(xinterp)
 
 """
+
 #plt.plot(basedata,np.zeros(len(basedata)),'ro')
 #plt.plot(xinterp,np.zeros(len(xinterp)),'bo')
 #plt.plot(xinterp,ydata,'yo')
