@@ -28,6 +28,7 @@ j_low=np.asarray(j_low)
 xinterp=sample_points[ j_low[:].astype(int) ]
 ydata=fx(xinterp)
 
+"""
 #plt.plot(basedata,np.zeros(len(basedata)),'ro')
 #plt.plot(xinterp,np.zeros(len(xinterp)),'bo')
 #plt.plot(xinterp,ydata,'yo')
@@ -52,7 +53,7 @@ lin_interpolation=lin_interpolation.ravel()
 
 #plt.plot(sample_points[:len(lin_interpolation)],lin_interpolation,'g^')
 
-
+"""
 
 
 P_init=ydata
