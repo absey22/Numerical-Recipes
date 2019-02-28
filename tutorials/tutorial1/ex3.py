@@ -36,13 +36,13 @@ ydata=fx(xinterp)
 #linear interpolate on these values:
 lin_interpolation=[]
 for i in range(len(xinterp)):
-    print "section",i+1,"/",len(xinterp)
+    print("section",i+1,"/",len(xinterp))
     if i<len(xinterp)-1:
-        print "from:",min(sample_points[j_low[i]:j_low[i+1]]),"to:",max(sample_points[j_low[i]:j_low[i+1]])
+        print("from:",min(sample_points[j_low[i]:j_low[i+1]]),"to:",max(sample_points[j_low[i]:j_low[i+1]]))
         y=ydata[i]+(sample_points[j_low[i]:j_low[i+1]]-xinterp[i])*( (ydata[i+1]-ydata[i]) / (xinterp[i+1]-xinterp[i]) )
         lin_interpolation.append(y)
     else:
-        print "(must extrapolate)"
+        print("(must extrapolate)")
         
         #y=ydata[i-1]+(sample_points[j_low[i]:]-xinterp[i-1])*( (ydata[i]-ydata[i-1]) / (xinterp[i]-xinterp[i-1]) )
 lin_interpolation=np.asarray(lin_interpolation)
@@ -57,44 +57,43 @@ lin_interpolation=lin_interpolation.ravel()
 
 P_init=ydata
 P=P_init
-print "inital P:",P
+print("inital P:",P)
 for order in range(len(xinterp)-1):
     print
-    print ":::FINDING ORDER",order+1," terms:::  (using order",order,"with",len(P),"entries)"
+    print(":::FINDING ORDER",order+1," terms:::  (using order",order,"with",len(P),"entries)")
     for p in P:
-        print p
+        print(p)
     H=[]
     for i in range(len(P)-1):
         j=i+(order+1)
         print
-        print "--==--the p-th item:","P_"+str((i,j))
+        print("--==--the p-th item:","P_"+str((i,j)))
         if order==0:
             num1=(sample_points[j_low[i]:j_low[j]] - xinterp[j]) *P[i]
             num2=(sample_points[j_low[i]:j_low[j]] - xinterp[i]) *P[i+1]
             den=xinterp[j]-xinterp[i]
         else:
-            print "1st term:","P_"+str((i,j-1))
-            print "---interpolate on:",min(sample_points[j_low[i]:j_low[j-1]]),"to",max(sample_points[j_low[i]:j_low[j-1]]),"btwn",xinterp[i],"and",xinterp[j-1],"(",len(sample_points[j_low[i]:j_low[j-1]]),"pts.)"
-            print "---subtract",xinterp[j],"from it"
-            print "---multiply that result by",P[i]
+            print("1st term:","P_"+str((i,j-1)))
+            print("---interpolate on:",min(sample_points[j_low[i]:j_low[j-1]]),"to",max(sample_points[j_low[i]:j_low[j-1]]),"btwn",xinterp[i],"and",xinterp[j-1],"(",len(sample_points[j_low[i]:j_low[j-1]]),"pts.)")
+            print("---subtract",xinterp[j],"from it")
+            print("---multiply that result by",P[i])
             
-            print "2nd term:","P_"+str((i+1,j))
-            print "---interpolate on:",min(sample_points[j_low[i+1]:j_low[j]]),"to",max(sample_points[j_low[i+1]:j_low[j]]),"btwn",xinterp[i+1],"and",xinterp[j],"(",len(sample_points[j_low[i+1]:j_low[j]]),"pts.)"
-            print "---subtract",xinterp[i],"from it"
-            print "---multiply that result by",P[i+1]
+            print("2nd term:","P_"+str((i+1,j)))
+            print("---interpolate on:",min(sample_points[j_low[i+1]:j_low[j]]),"to",max(sample_points[j_low[i+1]:j_low[j]]),"btwn",xinterp[i+1],"and",xinterp[j],"(",len(sample_points[j_low[i+1]:j_low[j]]),"pts.)")
+            print("---subtract",xinterp[i],"from it")
+            print("---multiply that result by",P[i+1])
 
             num1=(sample_points[j_low[i]:j_low[j-1]] - xinterp[j]) * P[i]
             num2=(sample_points[j_low[i+1]:j_low[j]] - xinterp[i]) * P[i+1]
             den=xinterp[i]-xinterp[j]
             
         result=( num1 - num2 )  / (den)
-        print "RESULT =",result," (",len(result),"items)"
+        print("RESULT =",result," (",len(result),"items)")
         H.append( result )
     #H=np.asarray(H)
     #P=H.ravel()
     P=H
-print len(P)
-
+print(len(P))
 
 #plt.plot(sample_points[:len(P)],P,'p*')
 #plt.show()
