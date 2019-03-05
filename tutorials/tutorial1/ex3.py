@@ -35,7 +35,7 @@ ydata=fx(xinterp)
 #plt.plot(xinterp,ydata,'yo')
 
 
-#linear interpolate on these values:
+#LINEAR INTERPOLATION on these values:
 lin_interpolation=[]
 for i in range(len(xinterp)):
     print("section",i+1,"/",len(xinterp))
@@ -59,7 +59,37 @@ lin_interpolation=lin_interpolation.ravel()
 
 P_init=ydata
 P=P_init
-print("inital P:",P)
+
+
+
+#NEVILLES ALGORITHM AT SINGLE POINTS
+
+#def nevillealg(x0,x1,p1,p2):
+#    P=( (x-x0)*p1 - (x-x1)*p2 )/(x1-x0)
+#    return P
+poly=[]
+for s in sample_points:
+    print "s:",s
+    print "P:",P
+    for order in range(len(xinterp)-1):
+        print "order",order
+        H=[]
+        for i in range(len(P)-1):
+            j=i+(order+1)
+            print "(i,j):",(i,j)
+            if order==0:
+                result=P
+            else:
+                num1=(s - xinterp[j]) * P[i]
+                num2=(s - xinterp[i]) * P[i+1]
+                den=xinterp[i]-xinterp[j]
+                result=( num1 - num2 )  / (den)
+        H.append( result )
+        print H
+    P=H
+poly.append(P)
+"""
+#NEVILLES ALGORITHM ON SET OF POINTS
 for order in range(len(xinterp)-1):
     print
     print(":::FINDING ORDER",order+1," terms:::  (using order",order,"with",len(P),"entries)")
@@ -99,7 +129,7 @@ print(len(P))
 
 #plt.plot(sample_points[:len(P)],P,'p*')
 #plt.show()
-
+"""
 
 
 
