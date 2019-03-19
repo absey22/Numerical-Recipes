@@ -28,19 +28,17 @@ j_low=np.asarray(j_low)
 xinterp=sample_points[ j_low[:].astype(int) ]
 ydata=fx(xinterp)
 
-"""
-
-#plt.plot(basedata,np.zeros(len(basedata)),'ro')
-#plt.plot(xinterp,np.zeros(len(xinterp)),'bo')
-#plt.plot(xinterp,ydata,'yo')
 
 
-#LINEAR INTERPOLATION on these values:
+
+
+
+print("LINEAR INTERPOLATION")
 lin_interpolation=[]
 for i in range(len(xinterp)):
-    print("section",i+1,"/",len(xinterp))
+    #print("section",i+1,"/",len(xinterp))
     if i<len(xinterp)-1:
-        print("from:",min(sample_points[j_low[i]:j_low[i+1]]),"to:",max(sample_points[j_low[i]:j_low[i+1]]))
+        #print("from:",min(sample_points[j_low[i]:j_low[i+1]]),"to:",max(sample_points[j_low[i]:j_low[i+1]]))
         y=ydata[i]+(sample_points[j_low[i]:j_low[i+1]]-xinterp[i])*( (ydata[i+1]-ydata[i]) / (xinterp[i+1]-xinterp[i]) )
         lin_interpolation.append(y)
     else:
@@ -50,46 +48,58 @@ for i in range(len(xinterp)):
 lin_interpolation=np.asarray(lin_interpolation)
 lin_interpolation=lin_interpolation.ravel()
 
+plt.figure()
+plt.subplot(3,1,1)
+plt.plot(basedata,np.zeros(len(basedata)),'ro',label="data abscissae")
+plt.plot(xinterp,ydata,'yo',label="interp function values")
+plt.plot(sample_points[:len(lin_interpolation)],lin_interpolation,'g^')
+plt.legend()
+plt.title("Linear Interpolation")
 
 
-#plt.plot(sample_points[:len(lin_interpolation)],lin_interpolation,'g^')
-
-"""
 
 
+
+
+print("POLYNOMIAL INTERPOLATION (Neville's)")
 P_init=ydata
 P=P_init
-
-
-
-#NEVILLES ALGORITHM AT SINGLE POINTS
-
-#def nevillealg(x0,x1,p1,p2):
-#    P=( (x-x0)*p1 - (x-x1)*p2 )/(x1-x0)
-#    return P
-poly=[]
-for s in sample_points:
-    print "s:",s
-    print "P:",P
-    for order in range(len(xinterp)-1):
-        print "order",order
+def neville(interppts,sample_pt,P):
+    for order in range(len(interppts)):
         H=[]
+        #print "order",order
+        if order==0:
+            H=P
+            #print H
+            continue
+        #print "BEFORE: P:",P, "len(P)",len(P)
         for i in range(len(P)-1):
-            j=i+(order+1)
-            print "(i,j):",(i,j)
-            if order==0:
-                result=P
-            else:
-                num1=(s - xinterp[j]) * P[i]
-                num2=(s - xinterp[i]) * P[i+1]
-                den=xinterp[i]-xinterp[j]
-                result=( num1 - num2 )  / (den)
-        H.append( result )
-        print H
-    P=H
-poly.append(P)
+            j=i+order
+            #print("--==--the p-th item:","P_"+str((i,j)))
+            #print P[i]
+            num1=(sample_pt - interppts[j]) * P[i]
+            num2=(sample_pt - interppts[i]) * P[i+1]
+            den=interppts[i]-interppts[j]
+            result=( num1 - num2 )  / (den)
+            H.append( result )
+            #print H
+        Pfinal=H
+        P=Pfinal
+        #print "AFTER: P:",Pfinal, "len(P)",len(Pfinal)
+    return Pfinal[0]
+
+plt.subplot(3,1,2)
+plt.plot(sample_points[:],neville(xinterp,sample_points[:],P),'bo')
+#plt.plot(basedata,fx(basedata),'ro')
+plt.ylim(-30,30)
+plt.plot(basedata,np.zeros(len(basedata)),'ro',label="data abscissae")
+plt.plot(xinterp,ydata,'yo',label="interp function values")
+plt.legend()
+plt.title("Neville's Algorithm")
+
+
 """
-#NEVILLES ALGORITHM ON SET OF POINTS
+#NEVILLES ALGORITHM ON SIMULTANEOUS SET OF POINTS (doesnt work)
 for order in range(len(xinterp)-1):
     print
     print(":::FINDING ORDER",order+1," terms:::  (using order",order,"with",len(P),"entries)")
@@ -132,48 +142,63 @@ print(len(P))
 """
 
 
+print("POLYNOMIAL INTERPOLATION (Natural Cubic Splines)")
 
-"""
+print("# of abssicae: "+str(len(xinterp)))
 
-Neville=[]
-init_P=ydata
-P=init_P
+a=ydata
+print a, len(a)
 
-for s in range(len(sample_points)):
-    H=( (xinterp[i+1]-sample_points[])*P[i+1] + \
-        (sample_points[]-xinterp[i]) * P[i]  )  \
-       /  (xinterp[i]-xinterp[i+1])
-    H.append()
-    P=H
-       
-"""
+h=[]
+for i in range(len(xinterp)-1):
+    h.append(xinterp[i+1]-xinterp[i])
+
+print "h length", len(h)
+beta=[]
+for i in range(1,len(xinterp)-1):
+    
+    term1=(3./h[i])*(a[i+1]-a[i])
+    term2=(3./h[i-1])*(a[i]-a[i-1])
+    beta.append(term1-term2)
+print "beta length", len(beta)
+
+l=[];mu=[];z=[]
+l.append(1.);mu.append(0.);z.append(0.)
+for i in range(1,len(xinterp)-1):
+    l.append(2*(xinterp[i+1]-xinterp[i-1])-(h[i-1]*mu[i-1]))
+    mu.append(h[i]/l[i])
+    z.append((beta[i-1]-h[i-1]*z[i-1])/l[i])
+    
+
+#boundary condition
+l.append(1.);z.append(0.)
+
+b=np.zeros(len(xinterp))
+c=np.zeros(len(xinterp))
+d=np.zeros(len(xinterp))
+#c[-1]=0.
+
+print "len(z)",len(z)
+print "len(mu)",len(mu)
+print "len(c)",len(c)
+for i in range(len(xinterp)-2,0,-1):
+    print i
+    c[i]=z[i]-mu[i]*c[i-1]
+    b[i]=((a[i+1]-a[i])/h[i])-(h[i]*(c[i+1]+2.*c[i])/3.)
+    d[i]=(c[i+1]-c[i])/(3.*h[i])
+
+print a
+print b
+print c
+print d
 
 
 
-
-
-
-
+plt.subplot(3,1,3)
+plt.plot(basedata,np.zeros(len(basedata)),'ro',label="data abscissae")
+plt.plot(xinterp,ydata,'yo',label="interp function values")
+plt.title("Natural Cubic Splines")
+plt.legend()
 
 
 #plt.show()
-
-"""  
-# do this via bisection algorithm:
-
-    #loop over each data point  
-    #set edge points in the sample_points initially to the min and max
-    edgelow=min(sample_points)
-    edgehigh=max(sample_points)
-    #find the mid point of this by len/2
-    midpoint=(edgelow+edgehigh)/2
-    #check if the data point is < or > that mid point
-    if d<midpoint:
-        edgehigh=midpoint
-    #reset edge point(s) accordingly (move min to half, or max to half)
-    #set new mid point, and check where data point is again.
-    #repeat until data point either is a sample point OR is in btwn two sample points.
-"""
-
-
-
