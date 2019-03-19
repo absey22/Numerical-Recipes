@@ -1,0 +1,7 @@
+import numpy as np
+
+from sympy import diff
+
+x=diff(x**2sin(x))
+
+print x

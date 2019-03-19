@@ -1,0 +1,28 @@
+import numpy as np
+
+import matplotlib.pyplot as plt
+
+
+def f(x):
+    return x**2*np.sin(x)
+
+def centdiffapprox(x,h):
+    return (f(x+h)-f(x-h))/(2*h)
+    
+
+xspace=np.linspace(0,2*np.pi,200)
+
+fprime=xspace*(xspace*np.cos(xspace) + 2*np.sin(xspace))
+
+H=[2.,1.,0.1,0.01,0.001]
+centdiff_fcnts=[]
+for h in H:
+    approx=centdiffapprox(xspace,h)
+    centdiff_fcnts.append(approx)
+
+
+plt.plot(xspace,fprime)
+for fctn in centdiff_fcnts:
+    plt.plot(xspace,fctn)
+plt.show()
+
