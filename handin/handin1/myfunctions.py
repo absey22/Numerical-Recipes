@@ -64,10 +64,9 @@ def rng(seed,niter=int(1e6)):
 
 # ==========================  2(a)   ==========================
 
-def rng_normalize(low,high):
-    rnglist=rng(I_0,1000)[1]  #generate random floats 0 to 1.
+def rng_normalize(rnglist,low,high):
     rescaled=high+((rnglist-np.amax(rnglist))*(high-low)/np.ptp(rnglist))
-    return rescaled #return the last item in list of rescaled random floats
+    return rescaled #return list of rescaled random floats
 
 #return the 3D integrand integrated via trapezoid rule, but
 # including factor of 4*pi for integration over azimuth and elevation
@@ -133,3 +132,38 @@ def ridders(func,normconst,evalpt,h_init=0.1,m=20,d=2.):
             newapprox[i]=D
         approx=newapprox
     return approx[0]
+
+
+
+# ==========================  2(d)   ==========================
+
+
+def rejectionsample(rnglist,func,normconst,N_sat=100.):
+    xsamples=[]
+    x,y=rnglist #generate points 0,1
+    x=rng_normalize(x,0.0,5.0) #normalize them to size of p(x)
+    y=rng_normalize(y,0.0,np.nanmax(4*np.pi*normconst*func(x)/N_sat))
+    evalpts=4*np.pi*normconst*func(x)/N_sat
+    for i in range(len(x)):
+        if y[i]<=evalpts[i]: #keep x if y falls below p(x)
+            xsamples.append(x[i])
+        if len(xsamples)==100: #only keep first 100 drawn
+            break
+    return xsamples
+
+
+
+# ==========================  2(e)   ==========================
+
+
+def createhaloes(func,normconst,N):
+    haloes=np.empty((N,100,3))
+    theta,phi=rng(I_0)
+    radius=rng(I_0)
+    for i in range(N):
+        t=rng_normalize(theta[100*i:100*(i+1)],0.0,180.0) #elevation angles
+        p=rng_normalize(phi[100*i:100*(i+1)],0.0,360.0) #azimuthal angles
+        #take subsets of a long sequence of (mLCG and XOR shift) generated numbers
+        r=rejectionsample((radius[0][1000*i:1000*(i+1)],radius[1][1000*i:1000*(i+1)]),func,normconst)
+        haloes[i]=np.stack((r,t,p),axis=1)
+    return  haloes

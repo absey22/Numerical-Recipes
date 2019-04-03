@@ -12,13 +12,15 @@ from myfunctions import I_0,rng,rng_normalize,trapezoidrule_3Dnorm,neville,linin
 
 #generate the free parameters controlling of the exp drop-off:
 #   1.1 < a < 2.5
-#   0.5 < b < 2
-#   1.5 < c < 4
+#   0.5 < b < 2.0
+#   1.5 < c < 4.0
 
-a=rng(I_0,100)[1][5]
-a=rng_normalize(a,1.1,2.5)
-b=rng(I_0,100)[1][50]
-c=rng(I_0,100)[1][75]
+a=rng(I_0,100)[1]
+a=rng_normalize(a,1.1,2.5)[52]
+b=rng(I_0,100)[1]
+b=rng_normalize(b,0.5,2.0)[10]
+c=rng(I_0,100)[1]
+c=rng_normalize(c,1.5,4.0)[78]
 
 
 #define the profile function
@@ -31,8 +33,9 @@ def densityprofile(x,normalization,N_sat=100.):
 # (change the power to which the x prefactor is raised to in
 #  densityprofile() in order to form the integrand)
 def INTEGRANDdensityprofile(x):
-    x=float(x)
+    #x=np.float64(x)
     return (x/b)**(a-1.)*np.exp(-(x/b)**c)
+
 
 # Via implementing the trapezoid rule, calculate the normalization constant
 # (the average number of satellites cancels)
@@ -143,7 +146,7 @@ print("  dn(x)/dx (@ x=b) =", fprime.subs(x,b))
 
 
 # ==========================  2(d)   ==========================
-from myfunctions import I_0,rng
+from myfunctions import rejectionsample
 
 print(" ")
 print(" ------- ")
@@ -152,7 +155,44 @@ print(" ")
 
 
 theta,phi=rng(I_0,100)
+theta=rng_normalize(theta,0.0,180.0) #elevation angles
+phi=rng_normalize(phi,0.0,360.0) #azimuthal angles
 
 
-plt.plot(theta,phi)
+r=rejectionsample(rng(I_0,niter=2000),INTEGRANDdensityprofile,normconst=A)
+
+#display the result:
+print(" (      r       ,     theta    ,      phi     )")
+coords=np.stack((r,theta,phi),axis=1)
+print(coords)
+
+
+
+# ==========================  2(e)   ==========================
+from myfunctions import createhaloes
+
+print(" ")
+print(" ------- ")
+print("Exercise 2(e): (plotted)")
+print(" ")
+
+
+haloescube=createhaloes(INTEGRANDdensityprofile,normconst=A,N=1000)
+
+
+
+#plt.plot(haloescube[100,:,0],4*np.pi*A*INTEGRANDdensityprofile(haloescube[100,:,0]),'ro')
+#plt.plot(haloescube[210,:,0],4*np.pi*A*INTEGRANDdensityprofile(haloescube[210,:,0]),'go')
+#plt.plot(haloescube[920,:,0],4*np.pi*A*INTEGRANDdensityprofile(haloescube[920,:,0]),'bo')
+
+plt.hist(haloescube[:,:,0].ravel(),bins=10.**np.linspace(np.log10(1e-4),np.log10(5.),20))
+
+xspace=np.linspace(0,6,1000)
+plt.plot(xspace,90000*np.pi*A*INTEGRANDdensityprofile(xspace),":")
+
+plt.ylabel("log( N(x) )")
+plt.xlabel("log(x)")
+plt.xscale("log")
+plt.yscale("log")
+#plt.xlim(-4-0.1,np.log(6.)+0.1)
 plt.show()
