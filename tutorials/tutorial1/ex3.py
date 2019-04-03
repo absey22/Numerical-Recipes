@@ -143,7 +143,7 @@ print(len(P))
 
 
 print("POLYNOMIAL INTERPOLATION (Natural Cubic Splines)")
-
+"""
 print("# of abssicae: "+str(len(xinterp)))
 
 a=ydata
@@ -200,5 +200,5 @@ plt.plot(xinterp,ydata,'yo',label="interp function values")
 plt.title("Natural Cubic Splines")
 plt.legend()
 
-
-#plt.show()
+"""
+plt.show()
