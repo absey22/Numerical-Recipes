@@ -49,7 +49,7 @@ def xorshift(val,a=(21,35,4)):
     return val                           #normalize this to a float btwn 0.0 and 1.0
 
 
-def rng(seed,niter=int(1e6)):
+def rng(seed,niter=2000):
     I_j=seed #supply the seed
     pI_j=[]
     pI_j1=[]
@@ -158,12 +158,13 @@ def rejectionsample(rnglist,func,normconst,N_sat=100.):
 
 def createhaloes(func,normconst,N):
     haloes=np.empty((N,100,3))
-    theta,phi=rng(I_0)
-    radius=rng(I_0)
+    rnglist=rng(I_0)[1] #list of random numbers used for seeds
+    cnt=0
     for i in range(N):
-        t=rng_normalize(theta[100*i:100*(i+1)],0.0,180.0) #elevation angles
-        p=rng_normalize(phi[100*i:100*(i+1)],0.0,360.0) #azimuthal angles
-        #take subsets of a long sequence of (mLCG and XOR shift) generated numbers
-        r=rejectionsample((radius[0][1000*i:1000*(i+1)],radius[1][1000*i:1000*(i+1)]),func,normconst)
-        haloes[i]=np.stack((r,t,p),axis=1)
+        t=rng_normalize(rng(rnglist[cnt],niter=100)[1],0.0,180.0) #elevation angles
+        p=rng_normalize(rng(rnglist[cnt+1],niter=100)[1],0.0,360.0) #azimuthal angles
+        # Draw from (mLCG and XOR shift) generated numbers
+        r=rejectionsample(rng(rnglist[cnt+2],niter=1000),func,normconst)
+        haloes[i]=np.stack((r,t,p),axis=1) #append generated halo
+        cnt=i+3 #increment for list of seeds
     return  haloes

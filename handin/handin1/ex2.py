@@ -159,7 +159,7 @@ theta=rng_normalize(theta,0.0,180.0) #elevation angles
 phi=rng_normalize(phi,0.0,360.0) #azimuthal angles
 
 
-r=rejectionsample(rng(I_0,niter=2000),INTEGRANDdensityprofile,normconst=A)
+r=rejectionsample(rng(I_0,niter=1000),INTEGRANDdensityprofile,normconst=A)
 
 #display the result:
 print(" (      r       ,     theta    ,      phi     )")
@@ -181,18 +181,18 @@ haloescube=createhaloes(INTEGRANDdensityprofile,normconst=A,N=1000)
 
 
 
-#plt.plot(haloescube[100,:,0],4*np.pi*A*INTEGRANDdensityprofile(haloescube[100,:,0]),'ro')
-#plt.plot(haloescube[210,:,0],4*np.pi*A*INTEGRANDdensityprofile(haloescube[210,:,0]),'go')
-#plt.plot(haloescube[920,:,0],4*np.pi*A*INTEGRANDdensityprofile(haloescube[920,:,0]),'bo')
+plt.plot(haloescube[100,:,0],4*np.pi*A*INTEGRANDdensityprofile(haloescube[100,:,0]),'ro')
+plt.plot(haloescube[210,:,0],4*np.pi*A*INTEGRANDdensityprofile(haloescube[210,:,0]),'go')
+plt.plot(haloescube[920,:,0],4*np.pi*A*INTEGRANDdensityprofile(haloescube[920,:,0]),'bo')
 
-plt.hist(haloescube[:,:,0].ravel(),bins=10.**np.linspace(np.log10(1e-4),np.log10(5.),20))
+plt.hist(haloescube[:,:,0].ravel(),bins=20)#10.**np.linspace(np.log10(1e-4),np.log10(5.),20))
 
 xspace=np.linspace(0,6,1000)
 plt.plot(xspace,90000*np.pi*A*INTEGRANDdensityprofile(xspace),":")
 
 plt.ylabel("log( N(x) )")
 plt.xlabel("log(x)")
-plt.xscale("log")
-plt.yscale("log")
+#plt.xscale("log")
+#plt.yscale("log")
 #plt.xlim(-4-0.1,np.log(6.)+0.1)
 plt.show()
