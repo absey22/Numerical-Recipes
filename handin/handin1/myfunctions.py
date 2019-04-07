@@ -7,11 +7,11 @@ import numpy as np
 # ==========================  1(a)   ==========================
 def poisson(lam,k):
     lam=np.float64(lam)
-    k=np.int64(k)           #makes the fctn "continuous"
+    k=np.int64(k)       #makes the fctn "continuous"
     if k<0:            #k cant be negative
         k=-1*k
     if lam<0:
-        lam=-1*lam
+        lam=-1.*lam
     if k==0:           
         kfact=1.0
     else:
@@ -71,11 +71,11 @@ def rng_normalize(rnglist,low,high):
 #return the 3D integrand integrated via trapezoid rule, but
 # including factor of 4*pi for integration over azimuth and elevation
 # (the average number of satellites cancels)
-def trapezoidrule_3Dnorm(func,panels,x1,x2):
+def trapezoidrule_3Dnorm(func,panels,x1,x2,A,B,C):
     h=(x2-x1)/panels
-    integral=0.5*(func(x1)+func(x2))
+    integral=0.5*(func(x1,A,B,C)+func(x2,A,B,C))
     for i in range(1,panels):
-        integral+=func(x1+i*h)
+        integral+=func(x1+i*h,A,B,C)
     return 1./(4*np.pi*(h*integral))
 
 
@@ -158,13 +158,92 @@ def rejectionsample(rnglist,func,normconst,N_sat=100.):
 
 def createhaloes(func,normconst,N):
     haloes=np.empty((N,100,3))
-    rnglist=rng(I_0)[1] #list of random numbers used for seeds
-    cnt=0
+    rnglist=rng(I_0,niter=2000)[1] #generate list of random numbers used for seeds
+    cnt=0 #counter for supplying fresh seeds to each halo from rnglist
     for i in range(N):
         t=rng_normalize(rng(rnglist[cnt],niter=100)[1],0.0,180.0) #elevation angles
         p=rng_normalize(rng(rnglist[cnt+1],niter=100)[1],0.0,360.0) #azimuthal angles
-        # Draw from (mLCG and XOR shift) generated numbers
+        
         r=rejectionsample(rng(rnglist[cnt+2],niter=1000),func,normconst)
+        
         haloes[i]=np.stack((r,t,p),axis=1) #append generated halo
-        cnt=i+3 #increment for list of seeds
+        cnt=i+3 #increment in the seed counter
     return  haloes
+
+
+
+# ==========================  2(f)   ==========================
+
+
+def bisection(fx,x1,x2,niter):
+    xl=x1;xr=x2
+    if fx(xl)*fx(xr)>0.:
+        print("not bracketing a root")
+        return np.nan
+    else:
+        for n in range(niter):
+            xguess=(xl+xr)/2.
+            cond=fx(xl)*fx(xguess) #check function values at these points
+            if cond<0.:
+                xr=xguess #cut off upper region
+            if cond>0.:
+                xl=xguess #cut off lower bracket region
+            if abs(xr-xl)<=1e-12:  #accuracy to converge to
+                print("Bisection converged to within 1e-12 after ",n,"iterations")
+                break
+            if n==niter:
+                print("Bisection reached ",niter,"iterations without a root.")
+        return xguess
+
+
+    
+# ==========================  2(g)   ==========================
+
+
+def selectionsort(data): #perform Selection Sort on data
+    sorteddata=data
+    for i in range(0,len(data)-1):
+        i_min=i
+        for j in range(i+1,len(data)):
+            if sorteddata[j]<sorteddata[i_min]:
+                i_min=j
+        if i_min!=i:
+            sorteddata[i_min],sorteddata[i]=sorteddata[i],sorteddata[i_min]
+    return sorteddata
+
+def calcpercentile(data,perc): #calculate the request percentile perc in the data
+    if perc>1:
+        perc/=100.
+    galcnt=len(data)
+    return data[int(perc*galcnt)]
+
+
+
+# ==========================  2(h)   ==========================
+
+
+def lininterp3D_onedim(data,func,aa,bb,cc,ax,density):
+    cubeinterp=[]
+    print(ax)
+    for z in range(data.shape[0]):
+        print("Sheet:",z+1,"/",data.shape[0])
+        sheet=data[z,:,:] #define sheet in which to "2D interpolate"
+        sheetinterp=[]
+        for i in range(sheet.shape[0]):
+            basedata=sheet[i,:]
+            sample_points=np.linspace(min(basedata),max(basedata),density*len(basedata))
+            j_low=[]
+            for bd in basedata:
+                interp_point=np.argmin(abs(bd-sample_points))
+                j_low.append(  interp_point  )
+            j_low=np.asarray(j_low)
+            xinterp=sample_points[ j_low[:].astype(int) ]
+            if ax=="0":
+                ydata=trapezoidrule_3Dnorm(func,panels=int(1e3),x1=0,x2=5,A=aa[z],B=bb[i],C=cc[:])
+            elif ax=="1":
+                ydata=trapezoidrule_3Dnorm(func,panels=int(1e3),x1=0,x2=5,A=aa[i],B=bb[:],C=cc[z])
+            elif ax=="2":
+                ydata=trapezoidrule_3Dnorm(func,panels=int(1e3),x1=0,x2=5,A=aa[:],B=bb[z],C=cc[i])
+            sheetinterp.append(lininterp(xinterp,sample_points,j_low,ydata))
+        cubeinterp.append(sheetinterp)
+    return np.asarray(cubeinterp)
