@@ -15,12 +15,12 @@ from myfunctions import I_0,rng,rng_normalize,trapezoidrule_3Dnorm,neville,linin
 #   0.5 < b < 2.0
 #   1.5 < c < 4.0
 
-a=rng(I_0,100)[1]
-a=rng_normalize(a,1.1,2.5)[52]
+a=rng(I_0,100)[1] #seed a list of random numbers
+a=rng_normalize(a,1.1,2.5)[53] #take an arbitrary item from this list after renormalizing
 b=rng(I_0,100)[1]
-b=rng_normalize(b,0.5,2.0)[10]
+b=rng_normalize(b,0.5,2.0)[11]
 c=rng(I_0,100)[1]
-c=rng_normalize(c,1.5,4.0)[78]
+c=rng_normalize(c,1.5,4.0)[79]
 
 
 #define the profile function
@@ -32,14 +32,14 @@ def densityprofile(x,normalization,N_sat=100.):
 # volume integral reduces to 4pi*INT(densityprofile*x^2*dx)
 # (change the power to which the x prefactor is raised to in
 #  densityprofile() in order to form the integrand)
-def INTEGRANDdensityprofile(x):
+def INTEGRANDdensityprofile(x,A=a,B=b,C=c):
     #x=np.float64(x)
-    return (x/b)**(a-1.)*np.exp(-(x/b)**c)
+    return (x/B)**(A-1.)*np.exp(-(x/B)**C)
 
 
 # Via implementing the trapezoid rule, calculate the normalization constant
 # (the average number of satellites cancels)
-A = trapezoidrule_3Dnorm(INTEGRANDdensityprofile,panels=int(1e5),x1=0,x2=5)
+A = trapezoidrule_3Dnorm(INTEGRANDdensityprofile,panels=int(1e5),x1=0,x2=5,A=a,B=b,C=c)
 
 #display result:
 print(" ")
@@ -49,7 +49,7 @@ print(" ")
 print("Using generated  a = %f" % a,", b = %f" % b, ", and c = %f" % c)
 print("  The profile normalization constant is A = %f" % A)
 
-
+"""
 
 # ==========================  2(b)   ==========================
 from myfunctions import neville,lininterp
@@ -63,7 +63,7 @@ ydata=np.log(densityprofile(xpts,A))
 plt.figure()
 plt.subplot(2,1,1)
 plt.title("Log Profile Interpolations")
-plt.plot(xdata,ydata,'r^',markersize=10,label='Interpolation values')
+plt.plot(xdata,ydata,'r^',markersize=10,label='"Data" values')
 tempspace=np.linspace(xdata[0],xdata[-1],25)
 plt.plot(tempspace,np.log(densityprofile(np.exp(tempspace),A)),'b+',label='Profile behavior')
 
@@ -93,6 +93,7 @@ P=P_init
 #interpolate and plot
 poly_interp=neville(xinterp,sample_points,P)
 plt.plot(sample_points,poly_interp,'bo',label="Neville's (4th degree polynomial)")
+
 plt.legend()
 
 
@@ -102,7 +103,7 @@ plt.legend()
 
 #interpolate and plot
 plt.subplot(2,1,2)
-plt.plot(xdata,ydata,'r^',markersize=10,label='Interpolation values')
+plt.plot(xdata,ydata,'r^',markersize=10,label='"Data" values')
 tempspace=np.linspace(xdata[0],xdata[-1],25)
 plt.plot(tempspace,np.log(densityprofile(np.exp(tempspace),A)),'b+',label='Profile behavior')
 lin_interp=lininterp(xinterp,sample_points,j_low,ydata)
@@ -117,8 +118,9 @@ print(" ")
 plt.xlabel("log(x)")
 plt.ylabel("log( n(x) )")
 plt.xlim(xdata[0]-0.1,xdata[-1]+0.1)
-plt.legend()
 
+
+plt.legend()
 plt.show()
 
 
@@ -143,6 +145,7 @@ fprime = f.diff(x)
 
 print("Via Sympy:")
 print("  dn(x)/dx (@ x=b) =", fprime.subs(x,b))
+
 
 
 # ==========================  2(d)   ==========================
@@ -179,20 +182,184 @@ print(" ")
 
 haloescube=createhaloes(INTEGRANDdensityprofile,normconst=A,N=1000)
 
+#get the radial component of all N haloes and histogram plot them
+radialcomponent=haloescube[:,:,0]
 
+#20 evenly log-spaced bins AND "density=True" ensures the area (or integral) under the histogram will sum to 1 by dividing the count by the number of observations times the bin width and not dividing by the total number of observations.
 
-plt.plot(haloescube[100,:,0],4*np.pi*A*INTEGRANDdensityprofile(haloescube[100,:,0]),'ro')
-plt.plot(haloescube[210,:,0],4*np.pi*A*INTEGRANDdensityprofile(haloescube[210,:,0]),'go')
-plt.plot(haloescube[920,:,0],4*np.pi*A*INTEGRANDdensityprofile(haloescube[920,:,0]),'bo')
+evenlogbins=10.**np.linspace(-4,np.log(5.)/np.log(10.),20)
+#binwidths=logbins[1:]-logbins[:-1] #calculate width of each bin in log space
+#make histogram AND evenly space it by normalizing by the binwidths
+#radialhist,binedges=np.histogram(radialcomponent.ravel(),logbins)
+#radialhistnorm=radialhist/binwidths
+plt.hist(radialcomponent.ravel(),bins=evenlogbins,edgecolor='black',linewidth=1.2,density=True,label= '(prob. density normalized counts)')
+#plt.bar(logbins[:-1],radialhistnorm,binwidths,label='Avg. satellites in 1000 haloes (normalized)')
 
-plt.hist(haloescube[:,:,0].ravel(),bins=20)#10.**np.linspace(np.log10(1e-4),np.log10(5.),20))
+#plot the profile itself N(x)=n(x)4pi*x^2
+xspace=np.linspace(1e-4,5,10000)
+plt.plot(xspace,4*np.pi*A*INTEGRANDdensityprofile(xspace),":",lw=3,label='Profile of Dist.')
 
-xspace=np.linspace(0,6,1000)
-plt.plot(xspace,90000*np.pi*A*INTEGRANDdensityprofile(xspace),":")
-
+plt.title('Satellites in 1000 haloes')
 plt.ylabel("log( N(x) )")
 plt.xlabel("log(x)")
-#plt.xscale("log")
-#plt.yscale("log")
-#plt.xlim(-4-0.1,np.log(6.)+0.1)
+plt.xscale("log")
+plt.yscale("log")
+plt.xlim(0.9e-4,5.1)
+plt.legend(loc=2)
+
 plt.show()
+
+
+
+# ==========================  2(f)   ==========================
+from myfunctions import bisection
+
+print(" ")
+print(" ------- ")
+print("Exercise 2(f): ")
+print(" ")
+
+
+#find roots as intersection(s) of y/2 and N(x)
+
+#First get the maximum and its location
+y=np.amax(4*np.pi*A*INTEGRANDdensityprofile(xspace))
+locmax=np.argmax(4*np.pi*A*INTEGRANDdensityprofile(xspace))
+
+#By inspection, the profile of the distribution has one roots on either
+# side of the maximum at y. There, call bisection once for each of them
+# by specifying the bounds of the root finding on either side of y
+region1=(1e-4,xspace[locmax])
+region2=(xspace[locmax],5.)
+
+#by shifting the profile down by y/2, we can call bisection on it.
+def shiftedprofile(xpt):
+    return 4*np.pi*A*INTEGRANDdensityprofile(xpt)-(y/2.)
+
+#call bisection method on each region
+root1=bisection(shiftedprofile,region1[0],region1[1],1000)
+root2=bisection(shiftedprofile,region2[0],region2[1],1000)
+
+
+#display the result:
+print("Two roots were found:")
+print("1: x,y =",root1,",",4*np.pi*A*INTEGRANDdensityprofile(root1))
+print("2: x,y =",root2,",",4*np.pi*A*INTEGRANDdensityprofile(root2))
+
+
+
+
+# ==========================  2(g)   ==========================
+from myfunctions import selectionsort,calcpercentile,poisson
+
+print(" ")
+print(" ------- ")
+print("Exercise 2(g): ")
+print(" ")
+
+
+#---Sorting galaxies:
+
+#using radial data from (e) 
+radialhist,binedges=np.histogram(radialcomponent.ravel(),20)
+
+#the largest bin occurs at
+ind=np.argmax(radialhist)
+#print(binedges[ind],binedges[ind+1])
+#print(radialhist[ind])
+
+#crop the haloes array to this bin
+haloes=[]
+for i in range(radialcomponent.shape[0]):
+    halo=radialcomponent[i,:]
+    #print(len(halo))
+    clippedhalo=halo[(halo>binedges[ind])&(halo<binedges[ind+1])]
+    #print(len(clippedhalo))
+    haloes.append(clippedhalo)
+
+#plt.clf()
+galaxies=[gal for gal in haloes for gal in gal]
+sortedgalaxies=selectionsort(galaxies.copy())
+
+#16th, 84th percentile (-1, +1 sigma around mean) and median of sortedgalaxies:
+print("16th percentile:",calcpercentile(sortedgalaxies,16))
+print("50th percentile (median):",calcpercentile(sortedgalaxies,50))
+print("84th percentile:",calcpercentile(sortedgalaxies,84))
+
+
+#plt.clf()
+#---Poisson comparison:
+
+heights=[len(galaxies) for galaxies in haloes]
+
+plt.hist(heights,bins=24,edgecolor='black',linewidth=1.2,density=True,label='(prob. density normalized, max = '+str(np.amax(heights))+')')
+k=np.arange(np.amin(heights),np.amax(heights))     #measurement k's for plotting
+lamb=np.mean(heights) #mean of poisson distribution to plot
+poissondist=[poisson(lamb,k) for k in k]
+
+plt.title("No. of Galaxies in Largest Radial Bin")
+plt.ylabel("Normalized Counts")
+plt.xlabel("")
+plt.plot(k,poissondist,":",lw=3,label='Poisson dist., mean = '+str(lamb))
+
+plt.legend()
+plt.show()
+
+"""
+
+# ==========================  2(h)   ==========================
+from myfunctions import lininterp3D_onedim
+
+print(" ")
+print(" ------- ")
+print("Exercise 2(h): ")
+print(" ")
+
+aa=np.arange(1.1,2.6,0.1) #15
+bb=np.arange(0.5,2.1,0.1) #16
+cc=np.arange(1.5,4.1,0.1) #26
+
+
+#Evaluate the normalization constant over a grid of a, b, and c parameters to create a cub
+Acube=trapezoidrule_3Dnorm(INTEGRANDdensityprofile,panels=int(1e5),x1=0,x2=5,A=aa[:,None,None],B=bb[None,:,None],C=cc[None,None,:])
+
+
+print("3D Interpolation between",Acube.shape[0]*Acube.shape[1]*Acube.shape[2],"values.")
+print("There are",Acube.shape[0],"sheets of dimension",Acube.shape[1],"by",Acube.shape[2])
+
+#Do Linear interpolation over ONE DIMENSION of Acube. "density parameter determines
+# how many multiples of data points to interpolate into Acube with.
+# (e.g. density=2 will double the size of the datacube)
+# "ax" determines which axis you are stretching
+Acubeinterp1=lininterp3D_onedim(Acube,INTEGRANDdensityprofile,aa,bb,cc,ax="0",density=2)
+print(Acubeinterp1.shape)
+
+print("After interpolation into one dimension there are",Acubeinterp1.shape[0]*Acubeinterp1.shape[1]*Acubeinterp1.shape[2],"interpolated values.")
+print("Leaving",Acubeinterp1.shape[0],"sheets of dimension",Acubeinterp1.shape[1],"by",Acubeinterp1.shape[2])
+
+
+#Complete the interpolation along other two axes of PREVIOUS OUTPUTS
+#"stretch" the Acubeinterp1 array into the other two dimensions via interpolation
+Acubeinterp2=lininterp3D_onedim(np.transpose(Acubeinterp1,(2,0,1)),INTEGRANDdensityprofile,aa,bb,cc,ax="1",density=2)
+print(Acubeinterp2.shape)
+
+Acubeinterp3=lininterp3D_onedim(np.transpose(Acubeinterp2,(0,2,1)),INTEGRANDdensityprofile,aa,bb,cc,ax="2",density=2)
+
+
+#**************************************************************************************
+#FAILS BECAUSE INTERPOLATOR ARCHITECTURE CAN NO LONGER WORK WITH THE "STRETCHED"
+# OR INTERPOLATED AXIS (size of an axis is enlarged by "density" kwarg when interpolating)
+
+# this could be fixed by passing the 3D interpolator a set of indices in the new
+# interpolated axis of where it should interpolate from into the next dimension
+#**************************************************************************************
+
+
+
+
+#3D plotting attempt
+#from mpl_toolkits.mplot3d import Axes3D
+#fig = plt.figure()
+#ax = fig.gca(projection='3d')
+#ax.voxels(Acube)
+#plt.show()
