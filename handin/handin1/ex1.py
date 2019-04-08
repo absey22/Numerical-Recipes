@@ -12,9 +12,9 @@ print(" ")
 print("Poisson: P_lambda(k)")
 print("P_1(0) =",poisson(1,0))
 print("P_5(10) =",poisson(5,10))
-print("P_3(20) =",poisson(3,21))
+print("P_3(21) =",poisson(3,21))
 print("P_2.6(40) =",poisson(2.6,40))
-
+#print("P_101(200) =",poisson(101,200))
 
 
 
@@ -63,6 +63,6 @@ plt.ylim(45000,52000)
 #plt.yticks([49600,49700,49800,49900,50000,50100,50200,50300])
 
 plt.legend()
-plt.show()
+plt.savefig("./plots/rngquality.png")
 
 

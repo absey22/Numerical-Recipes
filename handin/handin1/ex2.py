@@ -20,7 +20,7 @@ a=rng_normalize(a,1.1,2.5)[53] #take an arbitrary item from this list after reno
 b=rng(I_0,100)[1]
 b=rng_normalize(b,0.5,2.0)[11]
 c=rng(I_0,100)[1]
-c=rng_normalize(c,1.5,4.0)[79]
+c=rng_normalize(c,1.5,4.0)[78]
 
 
 #define the profile function
@@ -49,7 +49,7 @@ print(" ")
 print("Using generated  a = %f" % a,", b = %f" % b, ", and c = %f" % c)
 print("  The profile normalization constant is A = %f" % A)
 
-"""
+
 
 # ==========================  2(b)   ==========================
 from myfunctions import neville,lininterp
@@ -121,7 +121,7 @@ plt.xlim(xdata[0]-0.1,xdata[-1]+0.1)
 
 
 plt.legend()
-plt.show()
+plt.savefig("./plots/interpolationcomparison.png")
 
 
 
@@ -158,14 +158,14 @@ print(" ")
 
 
 theta,phi=rng(I_0,100)
-theta=rng_normalize(theta,0.0,180.0) #elevation angles
-phi=rng_normalize(phi,0.0,360.0) #azimuthal angles
+theta=rng_normalize(theta,0.0,np.pi) #elevation angles
+phi=rng_normalize(phi,0.0,2.*np.pi) #azimuthal angles
 
 
 r=rejectionsample(rng(I_0,niter=1000),INTEGRANDdensityprofile,normconst=A)
 
 #display the result:
-print(" (      r       ,     theta    ,      phi     )")
+print(" (   r(x/xvir)   ,  theta(rad)   ,  phi(rad)    )")
 coords=np.stack((r,theta,phi),axis=1)
 print(coords)
 
@@ -207,7 +207,7 @@ plt.yscale("log")
 plt.xlim(0.9e-4,5.1)
 plt.legend(loc=2)
 
-plt.show()
+plt.savefig("./plots/satellitesof1000haloes.png")
 
 
 
@@ -245,6 +245,19 @@ root2=bisection(shiftedprofile,region2[0],region2[1],1000)
 print("Two roots were found:")
 print("1: x,y =",root1,",",4*np.pi*A*INTEGRANDdensityprofile(root1))
 print("2: x,y =",root2,",",4*np.pi*A*INTEGRANDdensityprofile(root2))
+
+plt.plot(root1,INTEGRANDdensityprofile(root1),'y*',label='roots')
+plt.plot(root2,INTEGRANDdensityprofile(root2)),'y*')
+plt.plot(region1[0],0,"r<",label='region 1')
+plt.plot(region1[1]-0.1,0,"r>")
+plt.plot(region2[0]+0.1,0,"b<",label='region 2')
+plt.plot(region2[1],0,"b>")
+plt.plot(xspace(INTEGRANDdensityprofile(xspace)))
+plt.hline(y/2,xspace[0],xspace[-1],linestyle=":")
+plt.legend()
+
+
+plt.savefig("./plots/bi-intersection.png")
 
 
 
@@ -303,12 +316,12 @@ plt.xlabel("")
 plt.plot(k,poissondist,":",lw=3,label='Poisson dist., mean = '+str(lamb))
 
 plt.legend()
-plt.show()
+plt.savefig("./plots/poissoncomparison.png")
 
-"""
+
 
 # ==========================  2(h)   ==========================
-from myfunctions import lininterp3D_onedim
+from myfunctions import lininterp2D_onedim
 
 print(" ")
 print(" ------- ")
@@ -324,42 +337,128 @@ cc=np.arange(1.5,4.1,0.1) #26
 Acube=trapezoidrule_3Dnorm(INTEGRANDdensityprofile,panels=int(1e5),x1=0,x2=5,A=aa[:,None,None],B=bb[None,:,None],C=cc[None,None,:])
 
 
-print("3D Interpolation between",Acube.shape[0]*Acube.shape[1]*Acube.shape[2],"values.")
-print("There are",Acube.shape[0],"sheets of dimension",Acube.shape[1],"by",Acube.shape[2])
+print("3D Interpolation between",Acube.shape[0]*Acube.shape[1]*Acube.shape[2],"original values.")
 
+print("Starting from",Acube.shape[0],"sheets of dimension",Acube.shape[1],"by",Acube.shape[2])
+
+
+
+
+density=2 #change the density parameter to determine the stretching factor of all dimensions
+
+adense=np.arange(1.1,2.6,0.1/density)
+bdense=np.arange(0.5,2.1,0.1/density)
+cdense=np.arange(1.5,4.1,0.1/density)
 #Do Linear interpolation over ONE DIMENSION of Acube. "density parameter determines
 # how many multiples of data points to interpolate into Acube with.
 # (e.g. density=2 will double the size of the datacube)
 # "ax" determines which axis you are stretching
-Acubeinterp1=lininterp3D_onedim(Acube,INTEGRANDdensityprofile,aa,bb,cc,ax="0",density=2)
-print(Acubeinterp1.shape)
 
-print("After interpolation into one dimension there are",Acubeinterp1.shape[0]*Acubeinterp1.shape[1]*Acubeinterp1.shape[2],"interpolated values.")
-print("Leaving",Acubeinterp1.shape[0],"sheets of dimension",Acubeinterp1.shape[1],"by",Acubeinterp1.shape[2])
+#first dimension is over "c" parameter in Acube
+Acubeinterp1=lininterp2D_onedim(Acube,INTEGRANDdensityprofile,adense,bdense,cdense,ax="0",density=density)
 
 
-#Complete the interpolation along other two axes of PREVIOUS OUTPUTS
-#"stretch" the Acubeinterp1 array into the other two dimensions via interpolation
-Acubeinterp2=lininterp3D_onedim(np.transpose(Acubeinterp1,(2,0,1)),INTEGRANDdensityprofile,aa,bb,cc,ax="1",density=2)
-print(Acubeinterp2.shape)
+print("Interpolating in c leaves",Acubeinterp1.shape[0],"sheets of dimension",Acubeinterp1.shape[1],"by",Acubeinterp1.shape[2])
 
-Acubeinterp3=lininterp3D_onedim(np.transpose(Acubeinterp2,(0,2,1)),INTEGRANDdensityprofile,aa,bb,cc,ax="2",density=2)
 
+plt.figure()
+plt.subplot(3,2,1)
+plt.title("Original Cube")
+plt.imshow(Acube[7,:,:],origin='lower')
+plt.subplot(3,2,2)
+plt.title("Interpolated Along 1st Dimension")
+plt.xlabel("(here)")
+plt.imshow(Acubeinterp1[7,:,:],origin='lower')
+
+plt.subplot(3,2,3)
+
+plt.imshow(Acube[:,8,:],origin='lower')
+plt.subplot(3,2,4)
+plt.xlabel("(here)")
+plt.imshow(Acubeinterp1[:,8,:],origin='lower')
+
+plt.subplot(3,2,5)
+
+plt.imshow(Acube[:,:,15],origin='lower')
+plt.subplot(3,2,6)
+
+plt.imshow(Acubeinterp1[:,:,25],origin='lower')
+
+plt.savefig("./plots/interpolationfirstdim.png")
+
+
+#Must transpose the result in order to work over next axis of the array Acube(interp)
+Acubeinterp1_flipped=np.transpose(Acubeinterp1,(2,1,0))
+
+#interpolate over "a" parameter
+Acubeinterp2=lininterp2D_onedim(Acubeinterp1_flipped,INTEGRANDdensityprofile,adense,bdense,cdense,ax="1",density=density)
+
+print("Interpolating in a leaves",Acubeinterp2.shape[2],"sheets of dimension",Acubeinterp2.shape[1],"by",Acubeinterp2.shape[0])
+
+
+
+plt.figure()
+plt.subplot(3,2,1)
+plt.title("Original Cube")
+plt.imshow(Acube[7,:,:],origin='lower')
+plt.subplot(3,2,2)
+plt.title("Interpolated Along 1st AND 2nd Dimension")
+plt.xlabel("(here)")
+plt.imshow(np.transpose(Acubeinterp2,(2,1,0))[7,:,:],origin='lower')
+
+plt.subplot(3,2,3)
+
+plt.imshow(Acube[:,8,:],origin='lower')
+plt.subplot(3,2,4)
+plt.xlabel("(here)")
+plt.imshow(np.transpose(Acubeinterp2,(2,1,0))[:,8,:],origin='lower')
+
+plt.subplot(3,2,5)
+plt.imshow(Acube[:,:,15],origin='lower')
+plt.subplot(3,2,6)
+plt.ylabel("(here)")
+plt.imshow(np.transpose(Acubeinterp2,(2,1,0))[:,:,25],origin='lower')
+
+
+plt.savefig("./plots/interpolationseconddim.png")
+
+
+#transpose to a new face for the interpolation
+Acubeinterp2_flipped=np.transpose(Acubeinterp2,(2,0,1))
+
+#interpolate over "b" parameter
+Acubeinterp3=lininterp2D_onedim(Acubeinterp2_flipped,INTEGRANDdensityprofile,adense,bdense,cdense,ax="2",density=density)
+
+print("Interpolating in b leaves",Acubeinterp2.shape[1],"sheets of dimension",Acubeinterp2.shape[0],"which doesn't make sense. It should still be 3D.")
+
+"""
+plt.figure()
+plt.subplot(3,2,1)
+plt.title("Original Cube")
+plt.imshow(Acube[7,:,:])
+plt.subplot(3,2,2)
+plt.title("Interpolated Along 1st, 2nd, AND 3rd Dimensions")
+plt.imshow(np.transpose(Acubeinterp3,(2,0,1))[7,:,:])
+
+plt.subplot(3,2,3)
+
+plt.imshow(Acube[:,8,:])
+plt.subplot(3,2,4)
+
+plt.imshow(np.transpose(Acubeinterp3,(2,0,1))[:,8,:])
+
+plt.subplot(3,2,5)
+
+plt.imshow(Acube[:,:,15])
+plt.subplot(3,2,6)
+
+plt.imshow(np.transpose(Acubeinterp3,(2,0,1))[:,:,25])
+
+plt.show()
+"""
 
 #**************************************************************************************
-#FAILS BECAUSE INTERPOLATOR ARCHITECTURE CAN NO LONGER WORK WITH THE "STRETCHED"
-# OR INTERPOLATED AXIS (size of an axis is enlarged by "density" kwarg when interpolating)
-
-# this could be fixed by passing the 3D interpolator a set of indices in the new
-# interpolated axis of where it should interpolate from into the next dimension
+#WEIRD BUG I couldnt figure out why my interpolation fails for the final dimension. 
+# The line fitting returns empty arrays from lininterpolation within lininterp2D_onedim
+# (therefore final dimension is not displayed)
 #**************************************************************************************
-
-
-
-
-#3D plotting attempt
-#from mpl_toolkits.mplot3d import Axes3D
-#fig = plt.figure()
-#ax = fig.gca(projection='3d')
-#ax.voxels(Acube)
-#plt.show()
