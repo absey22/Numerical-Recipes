@@ -161,8 +161,8 @@ def createhaloes(func,normconst,N):
     rnglist=rng(I_0,niter=2000)[1] #generate list of random numbers used for seeds
     cnt=0 #counter for supplying fresh seeds to each halo from rnglist
     for i in range(N):
-        t=rng_normalize(rng(rnglist[cnt],niter=100)[1],0.0,180.0) #elevation angles
-        p=rng_normalize(rng(rnglist[cnt+1],niter=100)[1],0.0,360.0) #azimuthal angles
+        t=rng_normalize(rng(rnglist[cnt],niter=100)[1],0.0,np.pi) #elevation angles
+        p=rng_normalize(rng(rnglist[cnt+1],niter=100)[1],0.0,2.*np.pi) #azimuthal angles
         
         r=rejectionsample(rng(rnglist[cnt+2],niter=1000),func,normconst)
         
@@ -222,28 +222,40 @@ def calcpercentile(data,perc): #calculate the request percentile perc in the dat
 # ==========================  2(h)   ==========================
 
 
-def lininterp3D_onedim(data,func,aa,bb,cc,ax,density):
+def lininterp2D_onedim(data,func,aa,bb,cc,ax,density):
     cubeinterp=[]
-    print(ax)
     for z in range(data.shape[0]):
-        print("Sheet:",z+1,"/",data.shape[0])
         sheet=data[z,:,:] #define sheet in which to "2D interpolate"
         sheetinterp=[]
-        for i in range(sheet.shape[0]):
-            basedata=sheet[i,:]
+        for i in range(sheet.shape[0]): #iterate over one edge of the sheet
+            if ax=="0": #"ax" keyword for which dimension is being calculated
+                basedata=sheet[i,:]
+                ydata=trapezoidrule_3Dnorm(func,panels=int(1e3),x1=0,x2=5,A=aa[z],B=bb[i],C=cc[:])
+            elif ax=="1":
+                basedata=sheet[int(i/density),:]
+                ydata=trapezoidrule_3Dnorm(func,panels=int(1e3),x1=0,x2=5,A=aa[:],B=bb[i],C=cc[z])
+            elif ax=="2":
+                basedata=sheet[int(i/density),:]
+                ydata=trapezoidrule_3Dnorm(func,panels=int(1e3),x1=0,x2=5,A=aa[z],B=bb[:],C=cc[i])
             sample_points=np.linspace(min(basedata),max(basedata),density*len(basedata))
-            j_low=[]
+            j_low=[] #determine matching indices for make interpolation points
             for bd in basedata:
                 interp_point=np.argmin(abs(bd-sample_points))
                 j_low.append(  interp_point  )
             j_low=np.asarray(j_low)
-            xinterp=sample_points[ j_low[:].astype(int) ]
-            if ax=="0":
-                ydata=trapezoidrule_3Dnorm(func,panels=int(1e3),x1=0,x2=5,A=aa[z],B=bb[i],C=cc[:])
-            elif ax=="1":
-                ydata=trapezoidrule_3Dnorm(func,panels=int(1e3),x1=0,x2=5,A=aa[i],B=bb[:],C=cc[z])
-            elif ax=="2":
-                ydata=trapezoidrule_3Dnorm(func,panels=int(1e3),x1=0,x2=5,A=aa[:],B=bb[z],C=cc[i])
-            sheetinterp.append(lininterp(xinterp,sample_points,j_low,ydata))
-        cubeinterp.append(sheetinterp)
+            xinterp=sample_points[ j_low[:].astype(int) ] #get those points in the sample_points
+            sheetinterp.append(lininterp(xinterp,sample_points,j_low,ydata)) #sheet of 2D interpolation
+        cubeinterp.append(sheetinterp) #add each sheet to the new interpolated axis of Acube
     return np.asarray(cubeinterp)
+
+
+
+# ==========================  3(a)   ==========================
+
+#loglikelihood to maximize
+def loglikelihood(normconst,A,B,C,xpt):
+    return np.log(normconst)+ (A-3.)*np.log(xpt/B)-(xpt/B)**C
+
+def INTEGRANDdensityprofile(x,A,B,C):
+    #x=np.float64(x)
+    return (x/B)**(A-1.)*np.exp(-(x/B)**C)

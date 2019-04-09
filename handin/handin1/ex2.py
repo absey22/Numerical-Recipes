@@ -226,7 +226,7 @@ plt.tight_layout()
 
 print(" ")
 print(" ------- ")
-print("Exercise 2(f): ")
+print("Exercise 2(f): (and plotted)")
 print(" ")
 
 
@@ -263,7 +263,7 @@ plt.plot(region1[1]-0.1,0,"r>")
 plt.plot(region2[0]+0.1,0,"b<",label='region 2')
 plt.plot(region2[1],0,"b>")
 plt.plot(xspace,INTEGRANDdensityprofile(xspace))
-plt.hlines(y/2,xspace[0],xspace[-1],linestyle=":")
+plt.hlines(y/2.,xspace[0],xspace[-1],linestyle=":")
 plt.legend()
 
 
@@ -279,7 +279,7 @@ plt.tight_layout()
 
 print(" ")
 print(" ------- ")
-print("Exercise 2(g): ")
+print("Exercise 2(g): (and plotted)")
 print(" ")
 
 
@@ -337,7 +337,7 @@ plt.tight_layout()
 
 print(" ")
 print(" ------- ")
-print("Exercise 2(h): ")
+print("Exercise 2(h): (plotted)")
 print(" ")
 
 aa=np.arange(1.1,2.6,0.1) #15
@@ -441,7 +441,7 @@ Acubeinterp2_flipped=np.transpose(Acubeinterp2,(2,0,1))
 #interpolate over "b" parameter
 Acubeinterp3=lininterp2D_onedim(Acubeinterp2_flipped,INTEGRANDdensityprofile,adense,bdense,cdense,ax="2",density=density)
 
-print("Interpolating in b leaves",Acubeinterp2.shape[1],"sheets of dimension",Acubeinterp2.shape[0],"which doesn't make sense. It should still be 3D.")
+print("Interpolating in b leaves",Acubeinterp2.shape[1],"sheets of dimension",Acubeinterp2.shape[0])#this is a 2D array which doesn't make sense. It should still be 3D
 
 """
 plt.figure()
