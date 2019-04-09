@@ -53,6 +53,8 @@ print("  The profile normalization constant is A = %f" % A)
 
 # ==========================  2(b)   ==========================
 from myfunctions import neville,lininterp
+plt.clf()
+plt.tight_layout()
 
 #make the initial data points
 xpts=np.asarray([1e-4,1e-2,1e-1,1.,5.])
@@ -128,6 +130,7 @@ plt.savefig("./plots/interpolationcomparison.png")
 
 # ==========================  2(c)   ==========================
 from myfunctions import ridders
+plt.clf()
 
 print(" ")
 print(" ------- ")
@@ -150,6 +153,8 @@ print("  dn(x)/dx (@ x=b) =", fprime.subs(x,b))
 
 # ==========================  2(d)   ==========================
 from myfunctions import rejectionsample
+plt.clf()
+plt.tight_layout()
 
 print(" ")
 print(" ------- ")
@@ -165,6 +170,7 @@ phi=rng_normalize(phi,0.0,2.*np.pi) #azimuthal angles
 r=rejectionsample(rng(I_0,niter=1000),INTEGRANDdensityprofile,normconst=A)
 
 #display the result:
+print("Via rejection sampling using uniform generators to create radii given the known profile:")
 print(" (   r(x/xvir)   ,  theta(rad)   ,  phi(rad)    )")
 coords=np.stack((r,theta,phi),axis=1)
 print(coords)
@@ -173,6 +179,8 @@ print(coords)
 
 # ==========================  2(e)   ==========================
 from myfunctions import createhaloes
+plt.clf()
+plt.tight_layout()
 
 print(" ")
 print(" ------- ")
@@ -205,7 +213,7 @@ plt.xlabel("log(x)")
 plt.xscale("log")
 plt.yscale("log")
 plt.xlim(0.9e-4,5.1)
-plt.legend(loc=2)
+plt.legend(loc=3)
 
 plt.savefig("./plots/satellitesof1000haloes.png")
 
@@ -213,6 +221,8 @@ plt.savefig("./plots/satellitesof1000haloes.png")
 
 # ==========================  2(f)   ==========================
 from myfunctions import bisection
+plt.clf()
+plt.tight_layout()
 
 print(" ")
 print(" ------- ")
@@ -247,13 +257,13 @@ print("1: x,y =",root1,",",4*np.pi*A*INTEGRANDdensityprofile(root1))
 print("2: x,y =",root2,",",4*np.pi*A*INTEGRANDdensityprofile(root2))
 
 plt.plot(root1,INTEGRANDdensityprofile(root1),'y*',label='roots')
-plt.plot(root2,INTEGRANDdensityprofile(root2)),'y*')
+plt.plot(root2,INTEGRANDdensityprofile(root2),'y*')
 plt.plot(region1[0],0,"r<",label='region 1')
 plt.plot(region1[1]-0.1,0,"r>")
 plt.plot(region2[0]+0.1,0,"b<",label='region 2')
 plt.plot(region2[1],0,"b>")
-plt.plot(xspace(INTEGRANDdensityprofile(xspace)))
-plt.hline(y/2,xspace[0],xspace[-1],linestyle=":")
+plt.plot(xspace,INTEGRANDdensityprofile(xspace))
+plt.hlines(y/2,xspace[0],xspace[-1],linestyle=":")
 plt.legend()
 
 
@@ -264,6 +274,8 @@ plt.savefig("./plots/bi-intersection.png")
 
 # ==========================  2(g)   ==========================
 from myfunctions import selectionsort,calcpercentile,poisson
+plt.clf()
+plt.tight_layout()
 
 print(" ")
 print(" ------- ")
@@ -284,14 +296,12 @@ ind=np.argmax(radialhist)
 #crop the haloes array to this bin
 haloes=[]
 for i in range(radialcomponent.shape[0]):
-    halo=radialcomponent[i,:]
-    #print(len(halo))
+    halo=radialcomponent[i,:] #clip each halo to that largest bin
     clippedhalo=halo[(halo>binedges[ind])&(halo<binedges[ind+1])]
-    #print(len(clippedhalo))
     haloes.append(clippedhalo)
 
-#plt.clf()
-galaxies=[gal for gal in haloes for gal in gal]
+
+galaxies=[gal for gal in haloes for gal in gal] #sort them
 sortedgalaxies=selectionsort(galaxies.copy())
 
 #16th, 84th percentile (-1, +1 sigma around mean) and median of sortedgalaxies:
@@ -300,7 +310,7 @@ print("50th percentile (median):",calcpercentile(sortedgalaxies,50))
 print("84th percentile:",calcpercentile(sortedgalaxies,84))
 
 
-#plt.clf()
+
 #---Poisson comparison:
 
 heights=[len(galaxies) for galaxies in haloes]
@@ -322,6 +332,8 @@ plt.savefig("./plots/poissoncomparison.png")
 
 # ==========================  2(h)   ==========================
 from myfunctions import lininterp2D_onedim
+plt.clf()
+plt.tight_layout()
 
 print(" ")
 print(" ------- ")
@@ -458,7 +470,7 @@ plt.show()
 """
 
 #**************************************************************************************
-#WEIRD BUG I couldnt figure out why my interpolation fails for the final dimension. 
-# The line fitting returns empty arrays from lininterpolation within lininterp2D_onedim
-# (therefore final dimension is not displayed)
+#WEIRD BUG 3D Interpolation: I couldnt figure out why my interpolation fails for the
+# final dimension. The line fitting returns empty arrays from lininterpolation within
+# lininterp2D_onedim (therefore final dimension is not displayed).
 #**************************************************************************************

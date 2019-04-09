@@ -19,7 +19,8 @@ print("P_2.6(40) =",poisson(2.6,40))
 
 
 # ==========================  1(b)   ==========================
-
+plt.clf()
+plt.tight_layout(w_pad=1.0)
 # SEED FOUND IN "myfunctions.py"
 
 
@@ -47,7 +48,7 @@ plt.subplot(1,2,1)
 plt.plot(x[10:1010],y[10:1010],'ro')
 plt.xlabel("$I_j$")
 plt.ylabel("$I_{j+1}$")
-plt.title("Sequential Random Numbers (n = 1,000)")
+plt.title("n = 1,000")
 
 #plot 1,000,000 random numbers in a histogram
 
@@ -56,13 +57,13 @@ freq,bins,patches=plt.hist(y,bins=20,edgecolor='black', linewidth=1.2)
 binmidpts=0.5*(bins[1:] + bins[:-1])                  #find mid point of each bin
 plt.errorbar(binmidpts, freq, yerr=(freq)**0.5, fmt='none',label='Poissonian Std. dev.')
 plt.hlines(50000,0,1,linestyles=':',label='Ideal Uniform Dist.')
-plt.title("Binning random generations (n = 1,000,000)")
+plt.title("n = 1,000,000")
 plt.xlabel("pseudorandom value (0.05 wide bins)")
 plt.ylabel("frequency")
 plt.ylim(45000,52000)
 #plt.yticks([49600,49700,49800,49900,50000,50100,50200,50300])
 
-plt.legend()
+plt.legend(loc=3)
 plt.savefig("./plots/rngquality.png")
 
 
