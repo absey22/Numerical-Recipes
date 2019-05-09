@@ -1,0 +1,12 @@
+import numpy as np
+
+#euler method
+
+def f(y):
+    return -y
+
+def euler(h,f):
+    ynext=ycurr+h*f
+    return ynext
+
+print(euler(1.0,f(3)))

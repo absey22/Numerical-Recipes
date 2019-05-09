@@ -1,0 +1,5 @@
+import numpy as np
+
+dataset=np.genfromtxt("dataset_LATTE.txt")
+
+print(dataset)
