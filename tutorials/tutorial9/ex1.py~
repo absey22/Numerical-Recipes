@@ -1,0 +1,9 @@
+import numpy as np
+from scipy.ndimage import imread
+import matplotlib.pyplot as plt
+
+
+wolfimage=imread(wolf.jpg)
+
+plt.imshow(wolfimage)
+plt.show()
