@@ -1,0 +1,13 @@
+The KS pdf is usually calculated in terms of its cdf which is given by Press et al.
+
+\begin{equation}
+  1-2\sum_{j=1}^{inf}(-1)^{j-1}\text{exp}(-2j^2z^2)
+\end{equation}
+
+This converges very rapidly (as long as z>0) in about the first three terms to reach double precision accuracy.
+
+Then the first three terms (j=1,2,3) of the complementary distribution function give a simple sum of exponential terms.
+
+\begin{equation}
+  1-2\left( \text{exp}(-2z^2) - \text{exp}(-4z^2) + \text{exp}(-18z^2)\right)
+\end{equation}
