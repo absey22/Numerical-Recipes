@@ -1,0 +1,177 @@
+import numpy as np
+
+#FUNCTIONS to be called by the other scripts of this hand in assignment
+
+#seed initially supplied to RNG
+I_0=np.uint64(79193487)
+print("Initial seed set in ex1functions.py:",I_0)
+
+
+
+
+
+# ==========================  1(a)   ==========================
+
+
+#(BORROWED FROM MY EXERCISE 1)
+#64-bit XOR-shift: the input must be 64-bit and not equal to 0
+#this has a period of up to 2^64 - 1
+#using parameter a1,a2,a3 from the lecture slides
+def xorshift(val,a=(21,35,4)):
+    a=np.uint64(a)
+    val=np.uint64(val)                   # recast the shifting parameters to avoid
+    val=val^(val>>a[0])                  #  stuffing val into a smaller data type with XOR shift
+    val=val^(val<<a[1])
+    val=val^(val>>a[2])
+    return val #renormalize output for input to MWC
+
+
+#Multiply With Carry: base b=2^32 and multiplier a=4294957665 from lecture slides
+def MWC(val,a=4294957665):
+    a=np.uint64(a)
+    val=np.uint64(val)
+    val=a*( val & np.uint64((2**32)-1) ) + ( val>>np.uint64(32) ) # apply mwc and keep first 32 bits
+    return val
+
+
+#accepts a size as a number of uniform scalars to generate
+def Urng(size=10):
+    rnglist=np.zeros(size)
+    global I_0 #get global value for reassignment after rng
+    for i in range(len(rnglist)): #append uniform draws to rnglist
+        draw=xorshift(MWC(I_0))
+        I_0=draw #redefine the global seed for next use
+        rnglist[i]=draw/((2**64)-1) #normalize to 0,1
+    return rnglist
+
+
+
+
+# ==========================  1(b)   ==========================
+
+
+#take in a number of samples to generate in a normal distribution from two uniform variates
+# and transform their mean and stddev
+# (defaults to standard normal)
+def BoxMuller(N,mean=0.0,stdv=1.0):
+    #take two uniform variates
+    U1,U2=Urng(size=int(N)),Urng(size=int(N)) 
+    #and transform them into a gaussian variate (of scalable size)
+    X=np.sin(2*np.pi*U1)*np.sqrt(-2.*np.log(U2))
+    return X*stdv+mean    #to new mu/sigma with user defined mean and stdev
+
+#(normalized) gaussian for plotting shape in 1(b), and integrating in 1(c)
+# default standard normal
+def GaussianPDF(x,mu=0.0,s=1.0):
+    return (2. * np.pi*(s)**2.)**-0.5 * np.exp( - (x - mu)**2. / (2. * s**2) )
+
+
+
+# ==========================  1(c)   ==========================
+from math import exp
+
+#find area under GaussianPDF up to the point x.
+def GaussianCDF(x,mu=0.0,s=1.0):
+    #(FUNCTION BORROWED FROM MY EXERCISE 1)
+    #def trapezoidrule(panels,x1,x2): # function to integrate GaussianPDF
+    #    h=(x2-x1)/panels
+    #    integral=0.5*(GaussianPDF(x1,mu,s)+GaussianPDF(x2,mu,s))
+    #    for i in range(1,int(panels)):
+    #        integral+=GaussianPDF(x1+i*h,mu,s)
+    #    return h*integral
+    #return trapezoidrule(22,-5*s,x) # integrate from -5sigma to the desired x in 22 panels
+                                    # fewer panels used otherwise calculations become slow
+    #OR
+    # constants yields max error 1.5e-7 (via textbook: Abramowitz and Stegun, 1964)
+    p = 0.3275911 
+    a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429
+    def myerfx(C):
+        t=1./(1.+p*C)
+        erfx=1.-(a1*t+a2*t**2.+a3*t**3.+a4*t**4.+a5*t**5.)*exp(-C**2.)
+        return erfx
+    if x>=0.0:
+        cdf=0.5*( 1.+myerfx( (x-mu)/(s*2**0.5) ) )
+    elif x<0.0:
+        cdf=0.5*( 1.-myerfx( -(x-mu)/(s*2**0.5) ) )
+    return cdf
+
+
+#quicksort algorithm on some data
+def quicksort(data):
+    if len(data)==0: # if you get down to an empty array (due to partitioning): stop sorting
+        return data
+    pivot=data[-1] # pick an arbitrary pivot as last element in array
+    def partition(data,pivot):
+        lo=[];mid=[];hi=[] # mid will just be the pivot unless there are other values = to pivot
+        for d in data: # partition into sub arrays based on their size relative to the current pivot
+            if d<pivot:
+                lo.append(d)
+            if d==pivot:
+                mid.append(d)
+            if d>pivot:
+                hi.append(d)
+        return lo,mid,hi
+    #envoke the partition
+    lefthalf,pivotsection,righthalf=partition(data,pivot)
+    #recursively call quicksort on subsequently smaller sections of the original data array
+    sorteddata=np.concatenate((quicksort(lefthalf),pivotsection,quicksort(righthalf)))
+    return sorteddata   
+
+#area under Kolmogorov PDF (of D-statistic) until x for finding p-value as in Press et al. (a.k.a. the complementary CDF)
+def Q_KS(z): 
+        if z<0.0:   # filter for the value of z corresponding to a real cdf
+            return np.nan
+        if z==0.0:
+            return 0.0
+        else:        # otherwise calculate the actual p value(=1-P(z)) at z
+            expterm=exp(-2.*z**2.) 
+            p=2*(expterm-expterm**4.+expterm**9.)
+            return p
+        
+#given some data and a function func, find the largest distance between their CDF's
+#(defaults to test of standard normal cdf)
+def mykstest(data,cdf=GaussianCDF):  
+    N=len(data)
+    data_sorted=quicksort(data)   # sort it to look like a CDF
+    # start searching for the maximum distance D btwn these the data/ideal cdf
+    # this is the KS statistic
+    D=0.0      #initilize distance
+    for i in range(len(data_sorted)):
+        fo=i*N**-1.      # counters to find distances relative to the CDF
+        fn=(i+1.)*N**-1.
+        cdfeval=cdf(data_sorted[i],mu=0.0,s=1.0) # calculate cdf point
+        dist_curr=max( (abs(fo-cdfeval) , abs(fn-cdfeval)) ) # get max of the two distances
+        if dist_curr>D: # take the largest distance found in the data set
+            D=dist_curr
+    pval= Q_KS( (N**0.5+0.12+0.11*N**-0.5)*D )  # calculate corresponding p-value for this random observation of D (Press: Eqtn. 14.3.18)
+    return D,pval
+
+
+
+# ==========================  1(d)   ==========================
+
+
+#given data, and some function func, find the largest negative and positive distances
+# between their CDF's
+def kuiperstest(data,cdf=GaussianCDF):  # (defaults to test of standard normal)
+    N=len(data)
+    data_sorted=quicksort(data)   # sort it to look like a CDF
+    # start searching for the most negative and positive distances
+    mostpositive,mostnegative=0.0,0.0      # initilize distances
+    for i in range(len(data_sorted)):
+        fo=i*N**-1.      # counters to find distances relative to the CDF
+        fn=(i-1.)*N**-1.
+        cdfeval=cdf(data_sorted[i],mu=0.0,s=1.0) # calculate cdf point
+        mostp_curr=fo-cdfeval # calculate distances
+        mostn_curr=cdfeval-fn #!!! different sign than mykstest()
+        if mostp_curr>mostpositive: # take the largest positive distance found
+            mostpositive=mostp_curr
+        if mostn_curr>mostnegative: # take the largest negative found in the data set
+            mostnegative=mostn_curr
+    return abs(mostpositive),abs(mostnegative)
+
+
+
+# ==========================  1(e)   ==========================
+
+
